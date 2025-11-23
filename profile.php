@@ -30,10 +30,10 @@ if (!$user) {
 
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
 
-        <!-- Header + Edit Button -->
-        <div class="relative h-40 bg-gradient-to-r from-blue-500 via-purple-500 to-blue-600">
+        <!-- Header + Edit Button - FIXED: Added relative positioning and proper z-index -->
+        <div class="relative h-40 bg-gradient-to-r from-blue-500 via-purple-500 to-blue-600 z-0">
             <a href="edit-profile.php"
-               class="absolute top-4 right-4 bg-white bg-opacity-90 p-2 rounded-full hover:bg-opacity-100 transition">
+               class="absolute top-4 right-4 bg-white bg-opacity-90 p-2 rounded-full hover:bg-opacity-100 transition z-10">
                 <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                           d="M15.232 5.232l3.536 3.536m-2.036-5.036
@@ -44,9 +44,9 @@ if (!$user) {
 
         <div class="px-6 pb-6">
 
-            <!-- Profile Photo + Name -->
-            <div class="flex flex-col sm:flex-row sm:items-end -mt-16 mb-6">
-                <div class="h-32 w-32 rounded-full border-4 border-white overflow-hidden shadow-md">
+            <!-- Profile Photo + Name - FIXED: Added relative positioning and z-index to bring it above background -->
+            <div class="flex flex-col sm:flex-row sm:items-end -mt-16 mb-6 relative z-10">
+                <div class="h-32 w-32 rounded-full border-4 border-white overflow-hidden shadow-md bg-white">
 
                     <?php if (!empty($user['profile_image'])): ?>
                         <img src="<?= e($user['profile_image']) ?>" 
@@ -289,7 +289,7 @@ if (!$user) {
 
                                 <?php if (!empty($a['preview'])): ?>
                                 <p class="text-sm text-gray-700 mt-1">
-                                    “<?= e($a['preview']) ?>”
+                                    "<?= e($a['preview']) ?>"
                                 </p>
                                 <?php endif; ?>
 

@@ -23,21 +23,20 @@ $stmt = $conn->prepare("
 $stmt->execute([$userId]);
 $referralHistory = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// Get reward history
+// Get reward history - FIXED: Changed LIMIT to TOP
 $stmt = $conn->prepare("
-    SELECT rr.*, r.referred_user_id, u.name as referred_name
+    SELECT TOP 10 rr.*, r.referred_user_id, u.name as referred_name
     FROM referral_rewards rr
     JOIN referrals r ON rr.referral_id = r.id
     LEFT JOIN users u ON r.referred_user_id = u.id
     WHERE rr.user_id = ?
     ORDER BY rr.created_at DESC
-    LIMIT 10
 ");
 $stmt->execute([$userId]);
 $rewardHistory = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// Get milestones
-$stmt = $conn->query("SELECT * FROM referral_milestones WHERE is_active = TRUE ORDER BY referrals_required");
+// Get milestones - FIXED: Changed TRUE to 1
+$stmt = $conn->query("SELECT * FROM referral_milestones WHERE is_active = 1 ORDER BY referrals_required");
 $milestones = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 // Calculate next milestone

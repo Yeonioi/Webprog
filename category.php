@@ -16,7 +16,7 @@ if (!$category) {
     redirect('home.php');
 }
 
-// Fetch service categories with service count
+// Fetch service categories with service count - FIXED: Changed TRUE to 1
 $stmt = $conn->prepare("
     SELECT sc.*, gc.name AS general_category_name, gc.icon, gc.color,
            (SELECT COUNT(*) FROM services s WHERE s.service_category_id = sc.id) as service_count

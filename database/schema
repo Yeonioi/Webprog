@@ -1,145 +1,167 @@
--- FriendLink Database Schema with Referral System
+-- FriendLink Database Schema for SQL Server
 
-CREATE DATABASE IF NOT EXISTS friendlink;
+-- Create database if it doesn't exist
+IF NOT EXISTS (SELECT name FROM sys.databases WHERE name = 'friendlink')
+BEGIN
+    CREATE DATABASE friendlink;
+END
+GO
+
+-- Switch to the friendlink database
 USE friendlink;
+GO
+
+-- Drop tables if they exist (for clean reinstall)
+IF OBJECT_ID('messages', 'U') IS NOT NULL DROP TABLE messages;
+IF OBJECT_ID('bookmarks', 'U') IS NOT NULL DROP TABLE bookmarks;
+IF OBJECT_ID('reviews', 'U') IS NOT NULL DROP TABLE reviews;
+IF OBJECT_ID('services', 'U') IS NOT NULL DROP TABLE services;
+IF OBJECT_ID('service_categories', 'U') IS NOT NULL DROP TABLE service_categories;
+IF OBJECT_ID('general_categories', 'U') IS NOT NULL DROP TABLE general_categories;
+IF OBJECT_ID('referral_rewards', 'U') IS NOT NULL DROP TABLE referral_rewards;
+IF OBJECT_ID('referrals', 'U') IS NOT NULL DROP TABLE referrals;
+IF OBJECT_ID('referral_milestones', 'U') IS NOT NULL DROP TABLE referral_milestones;
+IF OBJECT_ID('users', 'U') IS NOT NULL DROP TABLE users;
+GO
 
 -- Users table
 CREATE TABLE users (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    name VARCHAR(100) NOT NULL,
-    email VARCHAR(100) UNIQUE NOT NULL,
-    password VARCHAR(255) NOT NULL,
-    phone VARCHAR(20),
-    location VARCHAR(100),
-    bio TEXT,
-    profile_image VARCHAR(255),
-    referral_code VARCHAR(20) UNIQUE NOT NULL,
+    id INT PRIMARY KEY IDENTITY(1,1),
+    name NVARCHAR(100) NOT NULL,
+    email NVARCHAR(100) UNIQUE NOT NULL,
+    password NVARCHAR(255) NOT NULL,
+    phone NVARCHAR(20),
+    location NVARCHAR(100),
+    bio NVARCHAR(MAX),
+    profile_image NVARCHAR(255),
+    referral_code NVARCHAR(20) UNIQUE NOT NULL,
     referred_by INT DEFAULT NULL,
     referral_points INT DEFAULT 0,
     total_referrals INT DEFAULT 0,
-    member_since TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (referred_by) REFERENCES users(id) ON DELETE SET NULL
+    member_since DATETIME DEFAULT GETDATE(),
+    created_at DATETIME DEFAULT GETDATE(),
+    updated_at DATETIME DEFAULT GETDATE(),
+    FOREIGN KEY (referred_by) REFERENCES users(id) ON DELETE NO ACTION ON UPDATE NO ACTION
 );
 
 -- Referrals table
 CREATE TABLE referrals (
-    id INT PRIMARY KEY AUTO_INCREMENT,
+    id INT PRIMARY KEY IDENTITY(1,1),
     referrer_id INT NOT NULL,
     referred_user_id INT NOT NULL,
-    referral_code VARCHAR(20) NOT NULL,
-    status ENUM('pending', 'completed', 'rewarded') DEFAULT 'pending',
+    referral_code NVARCHAR(20) NOT NULL,
+    status NVARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'completed', 'rewarded')),
     points_earned INT DEFAULT 0,
-    completed_at TIMESTAMP NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (referrer_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (referred_user_id) REFERENCES users(id) ON DELETE CASCADE,
-    UNIQUE KEY unique_referral (referrer_id, referred_user_id)
+    completed_at DATETIME NULL,
+    created_at DATETIME DEFAULT GETDATE(),
+    FOREIGN KEY (referrer_id) REFERENCES users(id) ON DELETE NO ACTION ON UPDATE NO ACTION,
+    FOREIGN KEY (referred_user_id) REFERENCES users(id) ON DELETE NO ACTION ON UPDATE NO ACTION,
+    CONSTRAINT unique_referral UNIQUE (referrer_id, referred_user_id)
 );
 
 -- Referral rewards table
 CREATE TABLE referral_rewards (
-    id INT PRIMARY KEY AUTO_INCREMENT,
+    id INT PRIMARY KEY IDENTITY(1,1),
     user_id INT NOT NULL,
     referral_id INT NOT NULL,
-    reward_type ENUM('signup', 'first_service', 'first_booking', 'milestone') NOT NULL,
+    reward_type NVARCHAR(20) NOT NULL CHECK (reward_type IN ('signup', 'first_service', 'first_booking', 'milestone')),
     points INT NOT NULL,
-    description TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (referral_id) REFERENCES referrals(id) ON DELETE CASCADE
+    description NVARCHAR(MAX),
+    created_at DATETIME DEFAULT GETDATE(),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE NO ACTION ON UPDATE NO ACTION,
+    FOREIGN KEY (referral_id) REFERENCES referrals(id) ON DELETE NO ACTION ON UPDATE NO ACTION
 );
 
 -- Referral milestones table
 CREATE TABLE referral_milestones (
-    id INT PRIMARY KEY AUTO_INCREMENT,
+    id INT PRIMARY KEY IDENTITY(1,1),
     referrals_required INT NOT NULL,
     points_reward INT NOT NULL,
-    title VARCHAR(100) NOT NULL,
-    description TEXT,
-    badge_icon VARCHAR(50),
-    is_active BOOLEAN DEFAULT TRUE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    title NVARCHAR(100) NOT NULL,
+    description NVARCHAR(MAX),
+    badge_icon NVARCHAR(50),
+    is_active BIT DEFAULT 1,
+    created_at DATETIME DEFAULT GETDATE()
 );
 
 -- General categories table
 CREATE TABLE general_categories (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    name VARCHAR(100) NOT NULL,
-    icon VARCHAR(10) NOT NULL,
-    color VARCHAR(50) NOT NULL,
-    description TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    id INT PRIMARY KEY IDENTITY(1,1),
+    name NVARCHAR(100) NOT NULL,
+    icon NVARCHAR(10) NOT NULL,
+    color NVARCHAR(50) NOT NULL,
+    description NVARCHAR(MAX),
+    created_at DATETIME DEFAULT GETDATE()
 );
 
 -- User-defined service categories table
 CREATE TABLE service_categories (
-    id INT PRIMARY KEY AUTO_INCREMENT,
+    id INT PRIMARY KEY IDENTITY(1,1),
     general_category_id INT NOT NULL,
-    name VARCHAR(100) NOT NULL,
+    name NVARCHAR(100) NOT NULL,
     created_by INT NOT NULL,
-    is_approved BOOLEAN DEFAULT TRUE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    is_approved BIT DEFAULT 1,
+    created_at DATETIME DEFAULT GETDATE(),
     FOREIGN KEY (general_category_id) REFERENCES general_categories(id) ON DELETE CASCADE,
-    FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE,
-    UNIQUE KEY unique_category_name (name)
+    FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE NO ACTION ON UPDATE NO ACTION,
+    CONSTRAINT unique_category_name UNIQUE (name)
 );
 
 -- Services table
 CREATE TABLE services (
-    id INT PRIMARY KEY AUTO_INCREMENT,
+    id INT PRIMARY KEY IDENTITY(1,1),
     user_id INT NOT NULL,
     service_category_id INT NOT NULL,
-    title VARCHAR(200) NOT NULL,
-    description TEXT,
-    rate VARCHAR(50),
-    location VARCHAR(100),
-    distance VARCHAR(50),
-    image VARCHAR(255),
-    is_featured BOOLEAN DEFAULT FALSE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    title NVARCHAR(200) NOT NULL,
+    description NVARCHAR(MAX),
+    rate NVARCHAR(50),
+    location NVARCHAR(100),
+    distance NVARCHAR(50),
+    image NVARCHAR(255),
+    is_featured BIT DEFAULT 0,
+    created_at DATETIME DEFAULT GETDATE(),
+    updated_at DATETIME DEFAULT GETDATE(),
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (service_category_id) REFERENCES service_categories(id) ON DELETE CASCADE
+    FOREIGN KEY (service_category_id) REFERENCES service_categories(id) ON DELETE NO ACTION ON UPDATE NO ACTION
 );
 
 -- Reviews table
 CREATE TABLE reviews (
-    id INT PRIMARY KEY AUTO_INCREMENT,
+    id INT PRIMARY KEY IDENTITY(1,1),
     service_id INT NOT NULL,
     reviewer_id INT NOT NULL,
     rating DECIMAL(2,1) NOT NULL,
-    comment TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    comment NVARCHAR(MAX),
+    created_at DATETIME DEFAULT GETDATE(),
     FOREIGN KEY (service_id) REFERENCES services(id) ON DELETE CASCADE,
-    FOREIGN KEY (reviewer_id) REFERENCES users(id) ON DELETE CASCADE
+    FOREIGN KEY (reviewer_id) REFERENCES users(id) ON DELETE NO ACTION ON UPDATE NO ACTION
 );
 
 -- Bookmarks table
 CREATE TABLE bookmarks (
-    id INT PRIMARY KEY AUTO_INCREMENT,
+    id INT PRIMARY KEY IDENTITY(1,1),
     user_id INT NOT NULL,
     service_id INT NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_at DATETIME DEFAULT GETDATE(),
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (service_id) REFERENCES services(id) ON DELETE CASCADE,
-    UNIQUE KEY unique_bookmark (user_id, service_id)
+    FOREIGN KEY (service_id) REFERENCES services(id),
+    CONSTRAINT unique_bookmark UNIQUE (user_id, service_id)
 );
 
 -- Messages table
 CREATE TABLE messages (
-    id INT PRIMARY KEY AUTO_INCREMENT,
+    id INT PRIMARY KEY IDENTITY(1,1),
     sender_id INT NOT NULL,
     receiver_id INT NOT NULL,
     service_id INT,
-    message TEXT NOT NULL,
-    is_read BOOLEAN DEFAULT FALSE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (receiver_id) REFERENCES users(id) ON DELETE CASCADE,
+    message NVARCHAR(MAX) NOT NULL,
+    is_read BIT DEFAULT 0,
+    created_at DATETIME DEFAULT GETDATE(),
+    FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE NO ACTION ON UPDATE NO ACTION,
+    FOREIGN KEY (receiver_id) REFERENCES users(id) ON DELETE NO ACTION ON UPDATE NO ACTION,
     FOREIGN KEY (service_id) REFERENCES services(id) ON DELETE SET NULL
 );
+GO
 
 -- Insert referral milestones
 INSERT INTO referral_milestones (referrals_required, points_reward, title, description, badge_icon) VALUES
@@ -163,18 +185,18 @@ INSERT INTO general_categories (name, icon, color, description) VALUES
 ('Pets & Animals', '🐾', 'bg-teal-100 text-teal-700', 'Pet sitting, dog walking, grooming, and animal care'),
 ('Events & Entertainment', '🎉', 'bg-rose-100 text-rose-700', 'Event planning, catering, entertainment, and celebrations');
 
--- Insert sample users with referral codes
+-- Insert sample users with referral codes (password is 'password' hashed with bcrypt)
 INSERT INTO users (name, email, password, phone, location, bio, profile_image, referral_code, referred_by, referral_points, total_referrals) VALUES
-('Jamie Smith', 'jamie.smith@example.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', '(555) 123-4567', 'Oakwood, CA', 'Hi there! I\'m Jamie and I recently moved to Oakwood. I\'m looking for help with various services and happy to connect with neighbors.', 'https://images.unsplash.com/photo-1494790108377-be9c29b29330', 'JAMIE2024', NULL, 350, 7),
+('Jamie Smith', 'jamie.smith@example.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', '(555) 123-4567', 'Oakwood, CA', 'Hi there! I''m Jamie and I recently moved to Oakwood. I''m looking for help with various services and happy to connect with neighbors.', 'https://images.unsplash.com/photo-1494790108377-be9c29b29330', 'JAMIE2024', NULL, 350, 7),
 ('Alex Johnson', 'alex.johnson@example.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', '(555) 234-5678', 'Maple Street', 'Professional handyman with 10+ years experience.', 'https://images.unsplash.com/photo-1540479859555-17af45c78602', 'ALEX2024', 1, 100, 2),
 ('Sarah Miller', 'sarah.miller@example.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', '(555) 345-6789', 'Oak Avenue', 'Experienced gardener and landscape designer.', 'https://images.unsplash.com/photo-1599629954294-12aa8b7fb4d4', 'SARAH2024', 1, 50, 1),
 ('Michael Rodriguez', 'michael.rodriguez@example.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', '(555) 456-7890', 'Pine Road', 'Loving pet sitter and dog walker.', 'https://images.unsplash.com/photo-1541364983171-a8ba01e95cfc', 'MIKE2024', 1, 0, 0);
 
 -- Insert referrals
 INSERT INTO referrals (referrer_id, referred_user_id, referral_code, status, points_earned, completed_at) VALUES
-(1, 2, 'JAMIE2024', 'rewarded', 100, NOW() - INTERVAL 30 DAY),
-(1, 3, 'JAMIE2024', 'rewarded', 100, NOW() - INTERVAL 20 DAY),
-(2, 4, 'ALEX2024', 'completed', 50, NOW() - INTERVAL 10 DAY);
+(1, 2, 'JAMIE2024', 'rewarded', 100, DATEADD(day, -30, GETDATE())),
+(1, 3, 'JAMIE2024', 'rewarded', 100, DATEADD(day, -20, GETDATE())),
+(2, 4, 'ALEX2024', 'completed', 50, DATEADD(day, -10, GETDATE()));
 
 -- Insert sample service categories
 INSERT INTO service_categories (general_category_id, name, created_by) VALUES
@@ -191,9 +213,9 @@ INSERT INTO service_categories (general_category_id, name, created_by) VALUES
 
 -- Insert sample services
 INSERT INTO services (user_id, service_category_id, title, description, rate, location, distance, image, is_featured) VALUES
-(2, 1, 'Handyman & Home Repair Expert', 'Professional handyman with 10+ years experience. Specializing in small repairs, furniture assembly, and general maintenance.', '$35/hour', 'Maple Street', '0.8 miles away', 'https://images.unsplash.com/photo-1540479859555-17af45c78602', TRUE),
-(3, 2, 'Professional Gardener', 'Experienced gardener offering lawn mowing, garden maintenance, planting, and landscape design services.', '$25/hour', 'Oak Avenue', '1.2 miles away', 'https://images.unsplash.com/photo-1599629954294-12aa8b7fb4d4', TRUE),
-(4, 3, 'Pet Care Specialist', 'Loving pet sitter and dog walker with experience caring for all types of pets. Available for daily walks or vacation care.', '$20/visit', 'Pine Road', '0.5 miles away', 'https://images.unsplash.com/photo-1541364983171-a8ba01e95cfc', TRUE);
+(2, 1, 'Handyman & Home Repair Expert', 'Professional handyman with 10+ years experience. Specializing in small repairs, furniture assembly, and general maintenance.', '$35/hour', 'Maple Street', '0.8 miles away', 'https://images.unsplash.com/photo-1540479859555-17af45c78602', 1),
+(3, 2, 'Professional Gardener', 'Experienced gardener offering lawn mowing, garden maintenance, planting, and landscape design services.', '$25/hour', 'Oak Avenue', '1.2 miles away', 'https://images.unsplash.com/photo-1599629954294-12aa8b7fb4d4', 1),
+(4, 3, 'Pet Care Specialist', 'Loving pet sitter and dog walker with experience caring for all types of pets. Available for daily walks or vacation care.', '$20/visit', 'Pine Road', '0.5 miles away', 'https://images.unsplash.com/photo-1541364983171-a8ba01e95cfc', 1);
 
 -- Insert sample reviews
 INSERT INTO reviews (service_id, reviewer_id, rating, comment) VALUES

@@ -10,24 +10,23 @@ $userStats = getReferralStats($conn, $userId);
 // Fetch general categories with service count
 $stmt = $conn->query("
     SELECT gc.*, 
-           (SELECT COUNT(*) FROM service_categories sc WHERE sc.general_category_id = gc.id AND sc.is_approved = TRUE) as service_count
+           (SELECT COUNT(*) FROM service_categories sc WHERE sc.general_category_id = gc.id AND sc.is_approved = 1) as service_count
     FROM general_categories gc
     ORDER BY gc.name
 ");
 $generalCategories = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// Fetch featured services
+// Fetch featured services - FIXED for SQL Server
 $stmt = $conn->query("
-    SELECT s.*, u.name, u.profile_image, sc.name as category_name, gc.name as general_category_name,
+    SELECT TOP 3 s.*, u.name, u.profile_image, sc.name as category_name, gc.name as general_category_name,
            (SELECT AVG(rating) FROM reviews WHERE service_id = s.id) as avg_rating,
            (SELECT COUNT(*) FROM reviews WHERE service_id = s.id) as review_count
     FROM services s
     JOIN users u ON s.user_id = u.id
     JOIN service_categories sc ON s.service_category_id = sc.id
     JOIN general_categories gc ON sc.general_category_id = gc.id
-    WHERE s.is_featured = TRUE
+    WHERE s.is_featured = 1
     ORDER BY s.created_at DESC
-    LIMIT 3
 ");
 $featuredServices = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
@@ -177,8 +176,7 @@ $featuredServices = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                     <span class="ml-1 text-sm text-gray-500">(<?= $service['review_count'] ?> reviews)</span>
                                     <span class="ml-4 text-sm text-gray-500">📍 <?= e($service['distance']) ?></span>
                                 </div>
-                                <div class="flex items-center">
-                                    <span class="text-lg font-semibold text-blue-600"><?= e($service['rate']) ?></span>
+                                <div>
                                 </div>
                             </div>
                         </div>

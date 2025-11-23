@@ -58,8 +58,7 @@
                                         <p class="mt-1 text-sm text-gray-600">Professional lawn mowing, edging, and landscaping services.</p>
                                     </div>
                                     <div class="mt-4 flex justify-between items-center">
-                                        <span class="text-blue-600 font-medium">$25/hour</span>
-                                        <span class="px-4 py-2 bg-green-50 text-green-700 rounded-full text-sm font-medium">Available Now</span>
+                                        <span class="px-2 py-2 bg-green-50 text-green-700 rounded-full text-sm font-medium">Available Now</span>
                                     </div>
                                 </div>
                             </div>
