@@ -1,9 +1,9 @@
 <?php
-// Get user's referral info for header
-$currentUserId = 1; // Demo user
-$stmt = $conn->prepare("SELECT referral_code, referral_points FROM users WHERE id = ?");
-$stmt->execute([$currentUserId]);
-$headerUser = $stmt->fetch(PDO::FETCH_ASSOC);
+require_once "config.php";
+
+// Get logged-in user info
+$currentUser = getCurrentUser($conn);
+$headerUser = $currentUser ? $currentUser : null;
 ?>
 <nav class="bg-white shadow-sm border-b border-gray-200">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -26,8 +26,10 @@ $headerUser = $stmt->fetch(PDO::FETCH_ASSOC);
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"></path>
                     </svg>
                     Refer & Earn
-                    <?php if ($headerUser['referral_points'] > 0): ?>
-                    <span class="ml-1 px-2 py-0.5 bg-blue-100 text-blue-700 text-xs rounded-full"><?= number_format($headerUser['referral_points']) ?></span>
+                    <?php if ($headerUser && $headerUser['referral_points'] > 0): ?>
+                        <span class="ml-1 px-2 py-0.5 bg-blue-100 text-blue-700 text-xs rounded-full">
+                            <?= number_format($headerUser['referral_points']) ?>
+                        </span>
                     <?php endif; ?>
                 </a>
                 <a href="bookmarks.php" class="text-gray-700 hover:text-blue-600 transition-colors">Bookmarks</a>
@@ -55,7 +57,7 @@ $headerUser = $stmt->fetch(PDO::FETCH_ASSOC);
                 <div class="relative">
                     <button class="flex items-center space-x-2" onclick="toggleDropdown()">
                         <div class="h-8 w-8 rounded-full overflow-hidden bg-gradient-to-br from-blue-400 to-purple-400">
-                            <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100" alt="Profile" class="h-full w-full object-cover">
+                            <img src="<?= e($headerUser['profile_image'] ?? 'assets/default-profile.jpg'); ?>" alt="Profile" class="h-full w-full object-cover">
                         </div>
                         <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
@@ -69,14 +71,11 @@ $headerUser = $stmt->fetch(PDO::FETCH_ASSOC);
                         <a href="bookmarks.php" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">My Bookmarks</a>
                         <div class="border-t border-gray-100 my-1"></div>
                         <a href="referrals.php" class="block px-4 py-2 text-sm text-blue-600 hover:bg-blue-50 flex items-center justify-between">
-                            <span class="flex items-center">
-                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"></path>
-                                </svg>
-                                Refer & Earn
-                            </span>
-                            <?php if ($headerUser['referral_points'] > 0): ?>
-                            <span class="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs rounded-full"><?= number_format($headerUser['referral_points']) ?></span>
+                            <span class="flex items-center">Refer & Earn</span>
+                            <?php if ($headerUser && $headerUser['referral_points'] > 0): ?>
+                                <span class="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs rounded-full">
+                                    <?= number_format($headerUser['referral_points']) ?>
+                                </span>
                             <?php endif; ?>
                         </a>
                         <div class="border-t border-gray-100 my-1"></div>
@@ -97,32 +96,4 @@ $headerUser = $stmt->fetch(PDO::FETCH_ASSOC);
         <!-- Mobile Navigation -->
         <div id="mobileMenu" class="hidden md:hidden pb-4">
             <div class="space-y-2">
-                <a href="home.php" class="block py-2 text-gray-700 hover:text-blue-600">Home</a>
-                <a href="search.php" class="block py-2 text-gray-700 hover:text-blue-600">Browse Services</a>
-                <a href="add-service.php" class="block py-2 text-gray-700 hover:text-blue-600">Add Service</a>
-                <a href="referrals.php" class="block py-2 text-blue-600 hover:text-blue-700 font-medium">Refer & Earn</a>
-                <a href="bookmarks.php" class="block py-2 text-gray-700 hover:text-blue-600">Bookmarks</a>
-                <a href="profile.php" class="block py-2 text-gray-700 hover:text-blue-600">Profile</a>
-            </div>
-        </div>
-    </div>
-</nav>
-
-<script>
-function toggleDropdown() {
-    const dropdown = document.getElementById('profileDropdown');
-    dropdown.classList.toggle('hidden');
-}
-
-function toggleMobileMenu() {
-    const menu = document.getElementById('mobileMenu');
-    menu.classList.toggle('hidden');
-}
-
-// Close dropdown when clicking outside
-window.addEventListener('click', function(e) {
-    if (!e.target.closest('.relative')) {
-        document.getElementById('profileDropdown').classList.add('hidden');
-    }
-});
-</script>
+                <a href="home.php" class
