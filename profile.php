@@ -276,7 +276,7 @@ if (!$user) {
                                 <p class="text-sm font-medium text-gray-900">
                                     <?php if ($a['type'] === 'message'): ?>
                                         Message with <?= e($a['with']) ?>
-                                    <?php elseif ($a['type'] === 'booking']): ?>
+                                    <?php elseif ($a['type'] === 'booking'): ?>
                                         Booked <?= e($a['service']) ?> with <?= e($a['with']) ?>
                                     <?php else: ?>
                                         Reviewed <?= e($a['for']) ?> — <?= $a['rating'] ?>/5 stars

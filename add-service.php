@@ -13,9 +13,7 @@ $categoryId = $_GET['category_id'] ?? null;
 $message = '';
 $messageType = '';
 
-/* ---------------------------------------------------------
-   Handle Form Submission
---------------------------------------------------------- */
+/* Handle Form Submission */
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $title = trim($_POST['title'] ?? '');
@@ -53,8 +51,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $message = "Service added successfully!";
             $messageType = "success";
 
-            header("Location: profile.php");
-            exit;
+            header("refresh:2;url=profile.php");
 
         } catch (PDOException $e) {
             error_log("Add-service error: " . $e->getMessage());
@@ -67,9 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-/* ---------------------------------------------------------
-   Fetch General Categories & Service Categories (SQL Server)
---------------------------------------------------------- */
+/* Fetch General Categories & Service Categories for SQL Server */
 $stmt = $conn->query("
     SELECT 
         gc.id, gc.name, gc.icon, gc.color, gc.description,
@@ -84,9 +79,7 @@ $stmt = $conn->query("
 
 $categoriesData = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-/* ---------------------------------------------------------
-   Fetch User Location
---------------------------------------------------------- */
+/* Fetch User Location */
 $stmt = $conn->prepare("SELECT location FROM users WHERE id = ?");
 $stmt->execute([$userId]);
 $user = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -108,7 +101,6 @@ $userLocation = $user['location'] ?? '';
 
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
-        <!-- Back Button -->
         <a href="home.php" class="text-blue-600 hover:text-blue-800 flex items-center mb-6">
             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -122,7 +114,6 @@ $userLocation = $user['location'] ?? '';
             <h1 class="text-2xl font-bold text-gray-900 mb-2">Add Your Service</h1>
             <p class="text-gray-600 mb-6">Share your skills with the community and start earning.</p>
 
-            <!-- Message Box -->
             <?php if ($message): ?>
                 <div class="mb-6 p-4 rounded-md 
                     <?= $messageType === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700' ?>">
@@ -161,28 +152,81 @@ $userLocation = $user['location'] ?? '';
                     </select>
 
                     <p class="text-xs text-gray-500 mt-2">
-                        Don’t see your category?
+                        Don't see your category?
                         <a href="add-category.php" class="text-blue-600 hover:underline">Create one</a>
                     </p>
                 </div>
 
                 <!-- Title -->
                 <div class="mb-6">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Service Title <span class="text-red-500">*</span></label>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Service Title <span class="text-red-500">*</span>
+                    </label>
                     <input type="text" name="title" required
                         placeholder="e.g., Professional Piano Teacher with 10+ Years Experience"
-                        class="w-full p-3 border rounded-lg focus:ring-blue-500">
+                        class="w-full p-3 border rounded-lg focus:ring-blue-500 focus:outline-none">
                 </div>
 
                 <!-- Description -->
                 <div class="mb-6">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Description <span class="text-red-500">*</span></label>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Description <span class="text-red-500">*</span>
+                    </label>
                     <textarea name="description" rows="5" required
                         placeholder="Describe your service and experience…"
-                        class="w-full p-3 border rounded-lg focus:ring-blue-500"></textarea>
+                        class="w-full p-3 border rounded-lg focus:ring-blue-500 focus:outline-none"></textarea>
                 </div>
 
                 <!-- Rate + Distance -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Rate <span class="text-red
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Rate <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text" name="rate" required
+                            placeholder="e.g., $30/hour or $50/session"
+                            class="w-full p-3 border rounded-lg focus:ring-blue-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Service Area</label>
+                        <input type="text" name="distance"
+                            placeholder="e.g., 5 miles radius"
+                            class="w-full p-3 border rounded-lg focus:ring-blue-500 focus:outline-none">
+                    </div>
+                </div>
+
+                <!-- Location -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Location</label>
+                    <input type="text" name="location" value="<?= e($userLocation) ?>"
+                        placeholder="Your general location"
+                        class="w-full p-3 border rounded-lg focus:ring-blue-500 focus:outline-none">
+                </div>
+
+                <!-- Image URL -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Image URL (optional)</label>
+                    <input type="url" name="image"
+                        placeholder="https://example.com/image.jpg"
+                        class="w-full p-3 border rounded-lg focus:ring-blue-500 focus:outline-none">
+                    <p class="text-xs text-gray-500 mt-2">Add a professional photo or leave blank for default</p>
+                </div>
+
+                <!-- Buttons -->
+                <div class="flex justify-end gap-4">
+                    <a href="home.php" 
+                       class="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+                        Cancel
+                    </a>
+                    <button type="submit" 
+                            class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
+                        Add Service
+                    </button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+
+</body>
+</html>

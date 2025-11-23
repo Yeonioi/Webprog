@@ -1,7 +1,6 @@
 <?php
 require_once 'config.php';
 
-// Validate general category ID
 $generalCategoryId = $_GET['id'] ?? null;
 
 if (!$generalCategoryId || !ctype_digit($generalCategoryId)) {
@@ -17,8 +16,17 @@ if (!$category) {
     redirect('home.php');
 }
 
-// Fetch service categories using helper from config.php
-$serviceCategories = getServiceCategoriesByGeneral($conn, $generalCategoryId);
+// Fetch service categories with service count
+$stmt = $conn->prepare("
+    SELECT sc.*, gc.name AS general_category_name, gc.icon, gc.color,
+           (SELECT COUNT(*) FROM services s WHERE s.service_category_id = sc.id) as service_count
+    FROM service_categories sc
+    JOIN general_categories gc ON sc.general_category_id = gc.id
+    WHERE sc.general_category_id = ? AND sc.is_approved = 1
+    ORDER BY sc.name
+");
+$stmt->execute([$generalCategoryId]);
+$serviceCategories = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -120,7 +128,7 @@ $serviceCategories = getServiceCategoriesByGeneral($conn, $generalCategoryId);
                 </p>
 
                 <a href="add-category.php?general=<?= $generalCategoryId ?>"
-                   class="px-6 py-3 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors font-medium">
+                   class="px-6 py-3 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors font-medium inline-block">
                     + Create First Service
                 </a>
             </div>
